@@ -1,3 +1,8 @@
+*.png
+*.tif
+**\__pycache__
+ground_motion_databases/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

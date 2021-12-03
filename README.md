@@ -1,2 +1,2 @@
 # pysequentialvulnerability
- Tools for fragility/vulnerability for sequences
+ Tools for SDOF fragility/vulnerability subjected to sequences
