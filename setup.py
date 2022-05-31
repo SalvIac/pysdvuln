@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 setup(
     name='pysdvuln',
     version='0.0.1',
-    description='Tools for SDOF fragility/vulnerability subjected to sequences - Salvatore Iacoletti',
+    description='Tools for SDOF state-dependent fragility/vulnerability subjected to sequences - Salvatore Iacoletti',
     author='Salvatore Iacoletti',
     author_email='salvatore.iacoletti92@gmail.com',
     url='https://github.com/SalvIac/pysdvuln',
