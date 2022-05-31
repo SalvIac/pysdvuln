@@ -1,2 +1,2 @@
-# pyvulnerability
- Tools for SDOF fragility/vulnerability subjected to sequences
+# pysdvuln
+Tools for SDOF state-dependent fragility/vulnerability subjected to sequences
