@@ -288,10 +288,10 @@ class Selector():
         if np.any(sample2d < self.range_im[0]):
             message += "constr6 "
             mult = 1. + mult*n*(np.sum(sample2d < self.range_im[0]))
-        mse = self.evaluate_sample2d(sample2d, self.range_im, self.bins) + \
-              np.log(mult)
-        print(message, mse)
-        return mse
+        logmse = self.evaluate_sample2d(sample2d, self.range_im, self.bins) + \
+              np.log(mult) # this is to penalize logmse in case of constraints
+        print(message, logmse)
+        return logmse
 
 
     # attempt at multi objective optimization
