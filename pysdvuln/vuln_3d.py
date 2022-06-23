@@ -19,6 +19,7 @@ class Vuln3d():
     
     def __init__(self, ddvc):
         self.ddvc = ddvc
+        self.imt = ddvc.imt
         
         points = list()
         z = list()
@@ -111,8 +112,7 @@ class Vuln3d():
         return pd.DataFrame(data=self.Z, index=self.X, columns=self.Y)
     
 
-    def plot_vuln_surf(self, unit="g", imt="IM", save=False, path="",
-                       max_img=None):
+    def plot_vuln_surf(self, unit="g", save=False, path="", max_img=None):
         X, Y = np.meshgrid(self.X, self.Y)
         if max_img is None:
             max_img = np.max(X)+1e-2
@@ -177,8 +177,8 @@ class Vuln3d():
                    self.Z[inds[0], inds[1]].reshape(n,n),
                    zdir='z', offset=0.01,
                    cmap=cm.coolwarm)
-        ax.set_xlabel('{} G1 ({})'.format(imt, unit))
-        ax.set_ylabel('{} G2 ({})'.format(imt, unit))
+        ax.set_xlabel('{} G1 ({})'.format(self.imt, unit))
+        ax.set_ylabel('{} G2 ({})'.format(self.imt, unit))
         ax.set_zlabel("Mean Loss Ratio")#("$E(LR | IM_{G1}, IM_{G2})$") #'Loss Ratio')
         ax.set_xlim([0.,max_img])
         ax.set_ylim([0.,max_img])
@@ -200,8 +200,8 @@ class Vuln3d():
         cbar.set_label('$E(LR | IM_{G1}, IM_{G2})$')
         plt.scatter([1., 2.55],[2.55, 1], marker="^")
         plt.plot([0., 15.], [0., 15.], color="k")
-        ax.set_xlabel('{} G1 ({})'.format(imt, unit))
-        ax.set_ylabel('{} G2 ({})'.format(imt, unit))
+        ax.set_xlabel('{} G1 ({})'.format(self.imt, unit))
+        ax.set_ylabel('{} G2 ({})'.format(self.imt, unit))
         ax.set_xlim([0.,max_img])
         ax.set_ylim([0.,max_img])
         ax.set_aspect('equal', 'box')

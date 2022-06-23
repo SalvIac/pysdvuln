@@ -17,8 +17,8 @@ def log(x, s, scale):
 
 class DamgDepFragCurves(DamgDepFragCurvesNoC):
     
-    def __init__(self, psdm, dsc, sigmab2b=0.):
-        super().__init__(psdm, dsc, sigmab2b)
+    def __init__(self, psdm, dsc, sigmab2b=0., imt="IM"):
+        super().__init__(psdm, dsc, sigmab2b, imt)
         self.pc = ProbCollapse(psdm)
 
 
@@ -100,7 +100,7 @@ class DamgDepFragCurves(DamgDepFragCurvesNoC):
         return popt[1], popt[0]
 
 
-    def check_plots(self, unit="m/s2", imt="IM", save=False, path=None):
+    def check_plots(self, unit="m/s2", imt=None, save=False, path=None):
         super().check_plots(unit, imt, save, path)
         
     

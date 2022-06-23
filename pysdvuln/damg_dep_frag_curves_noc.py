@@ -19,7 +19,8 @@ class DamgDepFragCurvesNoC():
     x_ims_g = np.logspace(np.log10(1e-3), np.log10(15), 1000)
     x_ims_ms2 = x_ims_g*9.81
     
-    def __init__(self, psdm, dsc, sigmab2b=0.):
+    def __init__(self, psdm, dsc, sigmab2b=0., imt="IM"):
+        self.imt = imt
         self.psdm = psdm
         self.dsc = dsc
         # get rid of cases where there is collapse, and edp==0 (with tol)
@@ -111,7 +112,7 @@ class DamgDepFragCurvesNoC():
     def get_fragilities_df(self, ims=None, unit="g"):
         ims = self.get_ims(ims, unit)
         P_ds = self.get_fragilities(ims, unit)
-        data = {"im ({})".format(unit): ims}
+        data = {"{} ({})".format(self.imt, unit): ims}
         for (ds1, ds2) in P_ds.keys():
             if ds1 == 0:
                 label = "DS"+str(ds2)
@@ -121,7 +122,7 @@ class DamgDepFragCurvesNoC():
         return pd.DataFrame(data)
         
 
-    def plot_frag_all(self, unit="g", imt="IM", x_ims=None):
+    def plot_frag_all(self, unit="g", imt=None, x_ims=None):
         x_ims = self.get_ims(x_ims, unit)
         P_ds = self.get_fragilities(x_ims, unit)
         
@@ -135,6 +136,8 @@ class DamgDepFragCurvesNoC():
                 ls = ["--", "-.", ":"][ds1-1]
             color = ["g", "y", [1.,0.6,0.], "r"][ds2-1]
             ax.plot(x_ims, P_ds[(ds1, ds2)], lw=1, ls=ls, color=color, label=label)
+        if imt is None:
+            imt = self.imt
         ax.set_xlabel('{} ({})'.format(imt, unit))
         ax.set_ylabel('P(DS-G2 >= ds | IM, DS-G1)')
         ax.legend(framealpha=0.5)
@@ -144,7 +147,7 @@ class DamgDepFragCurvesNoC():
         return fig, ax
 
 
-    def plot_frag_ds(self, ds1_plot=0, unit="g", imt="IM"):
+    def plot_frag_ds(self, ds1_plot=0, unit="g", imt=None):
         '''
         ds1==0, i.e., mainshock fragility
         '''
@@ -162,6 +165,8 @@ class DamgDepFragCurvesNoC():
                     ls = ["--", "-.", ":"][ds1-1]
                 color = ["b", "m", "g", "r"][ds2-1]
                 ax.plot(x_ims, P_ds[(ds1, ds2)], lw=1, ls=ls, color=color, label=label)
+        if imt is None:
+            imt = self.imt
         ax.set_xlabel('{} ({})'.format(imt, unit))
         ax.set_ylabel('P(DS-G2 >= ds | IM, DS-G1)')
         ax.legend(framealpha=0.5)
@@ -171,7 +176,7 @@ class DamgDepFragCurvesNoC():
         return ax
 
     
-    def check_plots(self, unit="m/s2", imt="IM", save=False, path=None):
+    def check_plots(self, unit="m/s2", imt=None, save=False, path=None):
         fig, ax = self.plot_frag_all(unit, imt)
         if save:
             fig.savefig(os.path.join(path, "frag_01.png"),

@@ -15,6 +15,8 @@ class Damg2Loss():
     
     def __init__(self, mean_loss, cov_loss=None):
         self.mean_loss = mean_loss
+        if cov_loss is None:
+            cov_loss = [None]*len(mean_loss)
         self.cov_loss = cov_loss
         
         

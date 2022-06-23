@@ -13,6 +13,7 @@ class DamgDepVulnCurves():
     
     
     def __init__(self, ddfc, d2l):
+        self.imt = ddfc.imt
         self.ims = ddfc.x_ims_g # in g by default
         self.vulns = dict()
         for ds1 in range(0,4):
@@ -45,7 +46,7 @@ class DamgDepVulnCurves():
      
     def get_vuln_curves_df(self, unit="g"):
          ims = self.get_ims(unit)
-         data = {"im": ims}
+         data = {self.imt: ims}
          for ds1 in self.vulns.keys():
              if ds1 == 0:
                  label = "Mainshock"
@@ -55,7 +56,7 @@ class DamgDepVulnCurves():
          return pd.DataFrame(data)
         
     
-    def check_plots(self, unit="g", imt="IM", save=False, path=None,
+    def check_plots(self, unit="g", imt=None, save=False, path=None,
                     max_img=None):
         if max_img is None:
             inds = np.ones_like(self.ims, dtype=bool)
@@ -77,6 +78,8 @@ class DamgDepVulnCurves():
             else:
                 plt.plot(self.ims[inds]*9.81, self.vulns[ds1][inds], label=label)
         plt.legend(framealpha=0.5)
+        if imt is None:
+            imt = self.imt
         plt.xlabel('{} ({})'.format(imt, unit))
         plt.ylabel('Mean Loss Ratio')
         if save:
