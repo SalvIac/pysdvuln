@@ -1,6 +1,20 @@
 # -*- coding: utf-8 -*-
+# pysdvuln
+# Copyright (C) 2021-2022 Salvatore Iacoletti
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+# 
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
-@author: Salvatore Iacoletti
 """
 
 import os
@@ -16,10 +30,17 @@ class PSDM_gg21():
 
     def __init__(self, ims_g1, ims_g2, hysts_g1, hysts_g2, maxds_g1, 
                  dam_state_cl, maxds=None, collapses=None, zero_tol=1e-3,
-                 mode="modified", **kwargs):
+                 unit="m/s2", mode="modified", **kwargs):
+        # this is to make sure acceleration is in m/s2
+        if unit == "g":
+            scale = 1/9.81
+        elif unit == "m/s2":
+            scale = 1.
+        else:
+            raise Exception("unit can only be 'g' or 'm/s2'")
         self.__dict__.update(kwargs)
-        self.ims_g1 = np.abs(ims_g1)
-        self.ims_g2 = np.abs(ims_g2)
+        self.ims_g1 = np.abs(ims_g1)/scale
+        self.ims_g2 = np.abs(ims_g2)/scale
         self.hysts_g1 = np.abs(hysts_g1)
         self.hysts_g2 = np.abs(hysts_g2)
         self.hysts_g12 = self.hysts_g1 + self.hysts_g2
@@ -36,7 +57,7 @@ class PSDM_gg21():
         self.mode = mode
         np.random.seed(42) # for reproducibility
         self.calculate()
-        
+            
         
     def calculate(self):
         # classify GM1
