@@ -27,7 +27,7 @@ from scipy import stats
 from scipy import interpolate
 
 
-class DamgDepFragCurvesNoC():
+class DamgDepFragModelsNoC():
 
     # default im arrays for plots and outputs
     x_ims_g = np.logspace(np.log10(1e-3), np.log10(15), 1000)
@@ -78,7 +78,7 @@ class DamgDepFragCurvesNoC():
         '''
         ds1 = 0 returns the mainshock fragility
         ds1 != 0 returns the aftershock fragility for ds2
-        this gets overridden in DamgDepFragCurves
+        this gets overridden in DamgDepFragModels
         '''
         if ds2 == 0:
             raise Exception("check ds2, it cannot be zero")
@@ -109,7 +109,7 @@ class DamgDepFragCurvesNoC():
     
     def get_fragility(self, ims, ds2, ds1=0, unit="m/s2"):
         '''
-        this gets overridden in DamgDepFragCurves
+        this gets overridden in DamgDepFragModels
         '''
         mu, beta = self.get_frag_params(ds2, ds1, unit)
         return norm.cdf((np.log(ims) - np.log(mu))/beta)

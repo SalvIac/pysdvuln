@@ -26,15 +26,74 @@ from matplotlib import cm
 
 
 class Vuln3d():
-    
-    space_number = 10
-    approx_1 = 0.99
-    
-    
-    def __init__(self, ddvc):
-        self.ddvc = ddvc
-        self.imt = ddvc.imt
         
+    def __init__(self, imls1, imls2, mlr, imt="IM", ddvc=None):
+        # store values
+        self.X = imls1
+        self.Y = imls2
+        self.Z = mlr
+        self.Z[np.isnan(self.Z)] = 1.
+        self.Z[self.Z>1] = 1.
+        self.ddvc = ddvc
+        self.imt = imt
+    
+    
+    @classmethod
+    def from_vulns(cls, ims, vulns, imt="IM", ddvc=None, space_number=10,
+                   approx_1=0.99):
+        points = list()
+        z = list()
+        # mainshock-only (G2=0 plane)
+        # ims = ddvc.get_ims(unit="g")
+        vuln = vulns[0] # ds1=0
+        for i1, i2, i3 in zip(ims, [0.]*len(ims), vuln):
+            points.append( [i1,i2] )
+            z.append(i3)
+        
+        # mainshock-only and state-dependent (given G1)
+        for ds1 in range(len(vulns.keys())):
+            vuln_ds = vulns[ds1]
+            # intersection with mainshock-only (G2=0 plane)
+            if ds1 == 0:
+                im_m = 0.
+            else:
+                im_m = cls.find_x(ims, vuln, vuln_ds[0])
+    
+            # avoid weird interpolation by estrapolating curves between
+            # subsequent ds (this scales the minimum of curve according to
+            # mainshock vuln)
+            if ds1 != len(vulns.keys())-1:
+                _ds1 = ds1+1
+                _vuln_ds = vulns[_ds1]
+                _im_m = cls.find_x(ims, vuln, _vuln_ds[0])
+            else:
+                _im_m = cls.find_x(ims, vuln, approx_1)
+            _ims = np.linspace(im_m, _im_m, space_number)
+            for im in _ims[:-1]:
+                if ds1 != len(vulns.keys())-1:
+                    w = (_ims.max()-im)/(_ims.max()-_ims.min())
+                    curve = w*vuln_ds + (1-w)*_vuln_ds
+                else:
+                    curve = vuln_ds
+                min_vuln = cls.find_y(ims, vuln, im)
+                vuln_scaled = cls.min_max_scaler(curve, min_vuln, curve[-1])
+            
+                # add points
+                for i1, i2, i3 in zip(im*np.ones(len(ims)), ims, vuln_scaled):
+                    points.append( [i1,i2] )
+                    z.append(i3)
+        
+        # store values and interpolate
+        X = ims #np.linspace(0.05, 3.1, 100)
+        Y = ims #np.linspace(0.05, 3.1, 100)
+        X, Y = np.meshgrid(X, Y)
+        interp = LinearNDInterpolator(np.array(points, dtype=float), z)
+        Z = interp(X, Y)
+        return cls(ims, ims, Z, imt, ddvc)
+    
+    
+    @classmethod
+    def from_ddvc(cls, ddvc, space_number=10, approx_1=0.99):
         points = list()
         z = list()
         # mainshock-only (G2=0 plane)
@@ -51,26 +110,26 @@ class Vuln3d():
             if ds1 == 0:
                 im_m = 0.
             else:
-                im_m = self.find_x(ims, vuln, vuln_ds[0])
-
+                im_m = cls.find_x(ims, vuln, vuln_ds[0])
+    
             # avoid weird interpolation by estrapolating curves between
             # subsequent ds (this scales the minimum of curve according to
             # mainshock vuln)
             if ds1 != len(ddvc.vulns.keys())-1:
                 _ds1 = ds1+1
                 _vuln_ds = ddvc.get_vuln_curve_ds1(ds1=_ds1)
-                _im_m = self.find_x(ims, vuln, _vuln_ds[0])
+                _im_m = cls.find_x(ims, vuln, _vuln_ds[0])
             else:
-                _im_m = self.find_x(ims, vuln, self.approx_1)
-            _ims = np.linspace(im_m, _im_m, self.space_number)
+                _im_m = cls.find_x(ims, vuln, approx_1)
+            _ims = np.linspace(im_m, _im_m, space_number)
             for im in _ims[:-1]:
                 if ds1 != len(ddvc.vulns.keys())-1:
                     w = (_ims.max()-im)/(_ims.max()-_ims.min())
                     curve = w*vuln_ds + (1-w)*_vuln_ds
                 else:
                     curve = vuln_ds
-                min_vuln = self.find_y(ims, vuln, im)
-                vuln_scaled = self.min_max_scaler(curve, min_vuln, curve[-1])
+                min_vuln = cls.find_y(ims, vuln, im)
+                vuln_scaled = cls.min_max_scaler(curve, min_vuln, curve[-1])
             
                 # add points
                 for i1, i2, i3 in zip(im*np.ones(len(ims)), ims, vuln_scaled):
@@ -78,17 +137,16 @@ class Vuln3d():
                     z.append(i3)
         
         # store values and interpolate
-        self.X = ims #np.linspace(0.05, 3.1, 100)
-        self.Y = ims #np.linspace(0.05, 3.1, 100)
-        X, Y = np.meshgrid(self.X, self.Y)
+        X = ims #np.linspace(0.05, 3.1, 100)
+        Y = ims #np.linspace(0.05, 3.1, 100)
+        X, Y = np.meshgrid(X, Y)
         interp = LinearNDInterpolator(np.array(points, dtype=float), z)
-        self.Z = interp(X, Y)
-        self.Z[np.isnan(self.Z)] = 1.
-        self.Z[self.Z>1] = 1.
-            
+        Z = interp(X, Y)
+        return cls(ims, ims, Z, ddvc.imt, ddvc)
     
-    @classmethod
-    def find_x(cls, x_vals, y_vals, y_target):
+    
+    @staticmethod
+    def find_x(x_vals, y_vals, y_target):
         ind = np.searchsorted(y_vals, y_target)
         if ind == 0:
             return x_vals[ind]
@@ -115,8 +173,8 @@ class Vuln3d():
         return out[0] 
     
     
-    @classmethod
-    def min_max_scaler(cls, y_vals, y_min, y_max):
+    @staticmethod
+    def min_max_scaler(y_vals, y_min, y_max):
         X_std = (y_vals - y_vals.min()) / (y_vals.max() - y_vals.min())
         scaled = X_std * (y_max - y_min) + y_min
         return scaled

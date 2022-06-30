@@ -23,23 +23,47 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-class DamgDepVulnCurves():
-    
-    
-    def __init__(self, ddfc, d2l):
-        self.imt = ddfc.imt
-        self.ims = ddfc.x_ims_g # in g by default
-        self.vulns = dict()
+
+class DamgDepVulnModels():
+
+    def __init__(self, imt, ims, vulns, unit="g"):
+        self.imt = imt 
+        if unit == "g": # in g by default
+            self.ims = ims
+        elif unit == "m/s2":
+            self.ims = ims/9.81
+        else:
+            raise Exception("check units")
+        self.vulns = vulns
+        
+        
+    @classmethod
+    def from_ddfc_d2l(cls, ddfc, d2l):
+        vulns = dict()
         for ds1 in range(0,4):
             frags = list()
             for ds2 in range(ds1+1, 5):
-                frags.append( ddfc.get_fragility(self.ims*9.81, ds2, ds1) )
+                frags.append( ddfc.get_fragility(ddfc.x_ims_g*9.81, ds2, ds1) )
+            vulns[ds1] = cls.get_mlr(frags, d2l, ds1)
+            # frags = np.array(frags).T
+            # temp1 = np.insert(frags, 0, np.ones_like(frags[:,0]), axis=1)
+            # temp2 = np.insert(frags, frags.shape[1], np.zeros_like(frags[:,0]), axis=1)
+            # prob_ds = temp1 - temp2
+            # dmg2loss_mesh = np.meshgrid(d2l.get_mean_loss()[ds1:], np.ones_like(frags[:,0]))[0]
+            # self.vulns[ds1] = np.sum( prob_ds * dmg2loss_mesh, axis=1 )
+        return cls(ddfc.imt, ddfc.x_ims_g, vulns)
+
+
+    @staticmethod
+    def get_mlr(frags, d2l, ds1=0):
+        if isinstance(frags, list):
             frags = np.array(frags).T
-            temp1 = np.insert(frags, 0, np.ones_like(frags[:,0]), axis=1)
-            temp2 = np.insert(frags, frags.shape[1], np.zeros_like(frags[:,0]), axis=1)
-            prob_ds = temp1 - temp2
-            dmg2loss_mesh = np.meshgrid(d2l.get_mean_loss()[ds1:], np.ones_like(frags[:,0]))[0]
-            self.vulns[ds1] = np.sum( prob_ds * dmg2loss_mesh, axis=1 )
+        temp1 = np.insert(frags, 0, np.ones_like(frags[:,0]), axis=1)
+        temp2 = np.insert(frags, frags.shape[1], np.zeros_like(frags[:,0]), axis=1)
+        prob_ds = temp1 - temp2
+        dmg2loss_mesh = np.meshgrid(d2l.get_mean_loss()[ds1:], np.ones_like(frags[:,0]))[0]
+        mlr = np.sum( prob_ds * dmg2loss_mesh, axis=1 )
+        return mlr
     
 
     def get_ims(self, unit="g"):

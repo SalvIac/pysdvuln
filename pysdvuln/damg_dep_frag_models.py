@@ -21,7 +21,8 @@ import numpy as np
 from scipy.stats import norm
 from scipy.stats import lognorm
 from scipy.optimize import curve_fit
-from pysdvuln.damg_dep_frag_curves_noc import DamgDepFragCurvesNoC
+from scipy.interpolate import interp1d
+from pysdvuln.damg_dep_frag_models_noc import DamgDepFragModelsNoC
 from pysdvuln.prob_collapse import ProbCollapse
 
 
@@ -29,7 +30,7 @@ def log(x, s, scale):
     return lognorm.cdf(x, s, 0., scale)
 
 
-class DamgDepFragCurves(DamgDepFragCurvesNoC):
+class DamgDepFragModels(DamgDepFragModelsNoC):
     
     def __init__(self, psdm, dsc, sigmab2b=0., imt="IM"):
         super().__init__(psdm, dsc, sigmab2b, imt)
@@ -130,8 +131,6 @@ class DamgDepFragCurves(DamgDepFragCurvesNoC):
         check = np.all(norm.cdf((np.log(x_ims) - np.log(mu))/beta) == \
                        norm.cdf((np.log(x_ims) - np.log(mu2))/self.beta))
         return check
-
-    
     
     
     def __repr__(self):
@@ -140,4 +139,64 @@ class DamgDepFragCurves(DamgDepFragCurvesNoC):
     def __str__(self):
         return "<{}>".format(self.__class__.__name__)
         
+    
+#%%
+
+def get_inds(ds1):
+    if ds1 == 0:
+        inds = range(1,5)
+        initial_ds = "Undamaged"
+    elif ds1 == 1:
+        inds = range(5,8)
+        initial_ds = "DS1"
+    elif ds1 == 2:
+        inds = range(8,10)
+        initial_ds = "DS2"
+    elif ds1 == 3:
+        inds = range(10,11)
+        initial_ds = "DS3"
+    return inds, initial_ds
+
+
+
+class ComputedDamgDepFragModels(DamgDepFragModelsNoC):
+
+    def __init__(self, frags_df, imt="IM", unit="g"):
+        self.imt = imt
+        imls = frags_df.iloc[:,0].to_numpy()
+        if unit == "g":
+            self.x_ims_g = imls
+            self.x_ims_ms2 = imls*9.81
+        elif unit == "m/s2":
+            self.x_ims_g = imls/9.81
+            self.x_ims_ms2 = imls
+        self.frags = frags_df.iloc[:,1:].to_numpy()
+        self.interpolants = list()
+        for i in range(self.frags.shape[1]):
+            self.interpolants.append(interp1d(self.x_ims_g*9.81,
+                                              self.frags[:,i]))
+
+
+    def get_fragility(self, ims, ds2, ds1=0, unit="m/s2"):
+        #TODO this is preliminary
+        if ds1 == 0:
+            ind = ds2 - 1
+        elif ds1 == 1:
+            ind = 4 + ds2 - 2
+        elif ds1 == 2:
+            ind = 7 + ds2 - 3
+        elif ds1 == 3:
+            ind = 9
+        if unit == "g":
+            ims = ims*9.81
+        return self.interpolants[ind](ims)
+
+
+    def get_fragilities(self, ims=None, unit="m/s2"):
+        ims = self.get_ims(ims, unit)
+        P_ds = dict()
+        for ds1 in range(4):
+            for ds2 in range(ds1+1,5):
+                P_ds[(ds1, ds2)] = self.get_fragility(ims, ds2, ds1, unit)
+        return P_ds
 
