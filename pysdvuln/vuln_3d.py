@@ -181,7 +181,11 @@ class Vuln3d():
 
     
     def get_vuln_3d_df(self):
-        return pd.DataFrame(data=self.Z, index=self.X, columns=self.Y)
+        df = pd.DataFrame(data=self.Z, index=self.X, columns=self.Y)
+        # df.columns[0] = self.imt
+        df = df.rename(columns = {df.columns[0]: "{}_{}".format(self.imt,
+                                                          str(df.columns[0]))})
+        return df
     
 
     def plot_vuln_surf(self, unit="g", save=False, path="", max_img=None):
