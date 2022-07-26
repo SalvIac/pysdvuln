@@ -22,7 +22,11 @@ import numpy as np
 import pandas as pd
 from scipy import integrate
 import matplotlib.pyplot as plt
-import openseespy.opensees as ops
+try:
+    import openseespy.opensees as ops
+except:
+    import warnings
+    warnings.warn("install openseespy (python >= 3.8)!")
 from pysdvuln.base_sdof import BaseSDOF, get_sinewave
 from matplotlib.animation import FuncAnimation
 bsd = BaseSDOF()
