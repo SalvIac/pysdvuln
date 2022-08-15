@@ -69,7 +69,7 @@ class SpectraContainer():
         return self.ims[key]
     
     
-    def plot_all_spectra(self, unit="g", x_scale="linear"):
+    def plot_all_spectra(self, unit="g", x_scale="linear", allgrey=True):
         fig, ax = plt.subplots()
         ax.set_xlabel("Period (s)")
         if unit == "g":
@@ -78,12 +78,17 @@ class SpectraContainer():
             ax.set_ylabel("Acceleration (m/s2)")
         else:
             raise Exception("unit can only be 'g' or 'm/s2'")
-        for rec in self.spectra:
+        for r, rec in enumerate(self.spectra):
             spec = rec.get_spectrum()
             if unit == "g":
                 spec[:,1] = spec[:,1]/9.81
-            ax.plot(spec[:,0], spec[:,1], linewidth=0.5, color=[0.5,0.5,0.5])
+            if allgrey:
+                ax.plot(spec[:,0], spec[:,1], linewidth=0.5, color=[0.5,0.5,0.5])
+            else:
+                ax.plot(spec[:,0], spec[:,1], linewidth=0.5, label="id{}".format(r))
         ax.set_xscale(x_scale)
+        if not allgrey:
+            plt.legend()
         plt.show()
     
 
