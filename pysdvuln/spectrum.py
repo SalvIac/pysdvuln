@@ -31,6 +31,7 @@ class Spectrum():
     
     def __init__(self, periods, psa, unit="m/s2", correct_pga=False, **kwargs):
         '''
+        always store response spectrum in m/s2
         '''
         if unit not in ["g", "m/s2"]:
             raise Exception("unit can only be 'g' or 'm/s2'")
@@ -46,8 +47,9 @@ class Spectrum():
 
 
     def correct_pga(self):
-        self.periods = np.insert(self.periods, 0, 0.)
-        self.psa = np.insert(self.psa, 0, self.psa[0])
+        if self.periods[0] != 0:
+            self.periods = np.insert(self.periods, 0, 0.)
+            self.psa = np.insert(self.psa, 0, self.psa[0])
         
 
     def scale(self, scaling_factor):
@@ -75,7 +77,10 @@ class Spectrum():
     def get_sa(self, period):
         if "interp_spectra" not in self.__dict__.keys():
             self.interp_spectra = self.get_interp_spectra()
-        return float(self.interp_spectra(period))
+        if isinstance(period, float):
+            return float(self.interp_spectra(period))
+        else:
+            return self.interp_spectra(period)
 
 
     def get_avgsa_T(self, struct_period):
@@ -123,5 +128,5 @@ class Spectrum():
         return self.__str__()
         
     def __str__(self):
-        return "<{} ".format(self.__class__.__name__) +">"
+        return "<{}".format(self.__class__.__name__) +">"
 
