@@ -261,7 +261,7 @@ class Selector():
     #     return mse
 
 
-    def fitness_pair(self, x):
+    def fitness_pair(self, x, return_message=False):
         '''
         x is a 1d numpy array:
         [index GM1 * n, index GM2 * n, scaling GM1 * n, scaling GM2 * n]
@@ -280,32 +280,34 @@ class Selector():
         # check that at least 70% of rsn for gm2 must be unique
         constr4 = int(rsn2.shape[0]*0.7) - np.unique(rsn2).shape[0]
         mult = 1.
-        message = ""
+        if return_message: message = ""
         if constr1 > 0:
-            message += "constr1 "
+            if return_message: message += "constr1 "
             mult = 1. + mult*n*constr1
         if constr2 > 0:
-            message += "constr2 "
+            if return_message: message += "constr2 "
             mult = 1. + mult*n*constr2
         if constr3 > 0:
-            message += "constr3 "
+            if return_message: message += "constr3 "
             mult = 1. + mult*n*constr3
         if constr4 > 0:
-            message += "constr4 "
+            if return_message: message += "constr4 "
             mult = 1. + mult*n*constr4
         sf1, sf2 = self.decode_inds(x[2*n:], n, float)
         sample2d = self.get_sample2d_inds(inds1, inds2, sf1, sf2)
         # check all ground motions are within the range
         if np.any(sample2d > self.range_im[1]):
-            message += "constr5 "
+            if return_message: message += "constr5 "
             mult = 1. + mult*n*(np.sum(sample2d > self.range_im[1]))
         if np.any(sample2d < self.range_im[0]):
-            message += "constr6 "
+            if return_message: message += "constr6 "
             mult = 1. + mult*n*(np.sum(sample2d < self.range_im[0]))
         logmse = self.evaluate_sample2d(sample2d, self.range_im, self.bins) + \
               np.log(mult) # this is to penalize logmse in case of constraints
-        print(message, logmse)
-        return logmse
+        if return_message:
+            return logmse, message
+        else:
+            return logmse
 
 
     # attempt at multi objective optimization
@@ -345,14 +347,23 @@ class Selector():
               np.random.uniform(size=2*n)).tolist() + \
              [0.9*maxscale] * 2*n 
         bounds = list(zip(lw, up))
+        callback = Callback()
         t = time.time()
-        ret = dual_annealing(self.fitness_pair, bounds=bounds, x0=x0,
-                             **kwargs)
+        ret = dual_annealing(self.fitness_pair, bounds=bounds, x0=x0, 
+                             callback=callback, **kwargs)
                              # defaults are: 
                              # maxiter=1000, initial_temp=5230.0, 
                              # restart_temp_ratio=2e-05, visit=2.62, 
                              # accept=-5.0, maxfun=1e7, no_local_search=False
-        print("dual_annealing", time.time()-t, self.fitness_pair(ret.x))
+        logmse, message = self.fitness_pair(ret.x, return_message=True)
+        if message == "":
+            print("Constraints respected -",
+                  "final logmse", logmse, "-",
+                  "time", time.time()-t, "-")
+        else:
+            print("Constraints NOT respected:", message, "-",
+                  "final logmse", logmse, "-",
+                  "time", time.time()-t, "-")
         inds1, inds2 = self.decode_inds(ret.x[:2*n], n)
         sf1, sf2 = self.decode_inds(ret.x[2*n:], n, float)
         sample2d = self.get_sample2d_inds(inds1, inds2, sf1, sf2)
@@ -479,3 +490,19 @@ class Selector():
     
 
 
+class Callback():
+    
+    def __init__(self):
+        self.iter = 0
+        
+    def __call__(self, x, f, context):
+        '''
+        A callback function with signature callback(x, f, context), which will
+        be called for all minima found. x and f are the coordinates and 
+        function value of the latest minimum found.
+        If the callback implementation returns True, the algorithm will stop.
+        '''
+        print(self.iter, f)
+        self.iter += 1
+        #TODO I can add stopping conditions here (return True for stop)
+        
