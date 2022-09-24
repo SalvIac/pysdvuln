@@ -84,6 +84,10 @@ class DamgStateClassifier():
         return np.arange(0, len(self.mean_thresholds)+1)
     
     
+    def get_num_ds(self):
+        return len(self.mean_thresholds)
+    
+    
     def get_damage_states_str(self):
         ds = self.get_damage_states()
         return ["DS{}".format(d) for d in ds]
