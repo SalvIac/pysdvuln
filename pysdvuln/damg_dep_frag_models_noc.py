@@ -63,12 +63,12 @@ class DamgDepFragModelsNoC():
         self.beta = np.sqrt( self.sigma_psdm**2 + sigmab2b**2 ) / psdm.d
         # hysteretic energy given damage state thresholds
         self.E_ds = dict()
-        for ds in range(0,5):
+        for ds in range(0,dsc.get_num_ds()+1):
             self.E_ds[ds] = psdm.a * dsc.get_ds_thresh(ds) ** psdm.b
         # median values of fragility curves for DS-g2|DS-g1 (DS-g1==0, mainshock fragility)
         self.mus = dict()
-        for ds1 in range(0,5):
-            for ds2 in range(0,5):
+        for ds1 in range(0,dsc.get_num_ds()+1):
+            for ds2 in range(0,dsc.get_num_ds()+1):
                 if ds2 > ds1:
                     self.mus[(ds1,ds2)] = ((self.E_ds[ds2] - self.E_ds[ds1]) / \
                            (psdm.c0*(1 - psdm.m * dsc.get_ds_thresh(ds1)))) ** (1/psdm.d)
@@ -136,7 +136,7 @@ class DamgDepFragModelsNoC():
         return pd.DataFrame(data)
         
 
-    def plot_frag_all(self, unit="g", imt=None, x_ims=None):
+    def plot_frag_all(self, unit="g", imt=None, x_ims=None, max_img=None):
         x_ims = self.get_ims(x_ims, unit)
         P_ds = self.get_fragilities(x_ims, unit)
         
@@ -156,12 +156,13 @@ class DamgDepFragModelsNoC():
         ax.set_ylabel('P(DS-G2 >= ds | IM, DS-G1)')
         ax.legend(framealpha=0.5)
         ax.set_ylim(0.,1.)
-        # ax.xlim(xmin=0)
-        # ax.ylim(ymin=0)
+        ax.set_xlim(xmin=0.)
+        if max_img is not None:
+            ax.set_xlim(xmax=max_img)
         return fig, ax
 
 
-    def plot_frag_ds(self, ds1_plot=0, unit="g", imt=None):
+    def plot_frag_ds(self, ds1_plot=0, unit="g", imt=None, max_img=None):
         '''
         ds1==0, i.e., mainshock fragility
         '''
@@ -185,8 +186,9 @@ class DamgDepFragModelsNoC():
         ax.set_ylabel('P(DS-G2 >= ds | IM, DS-G1)')
         ax.legend(framealpha=0.5)
         ax.set_ylim(0.,1.)
-        # ax.xlim(xmin=0)
-        # ax.ylim(ymin=0)
+        ax.set_xlim(xmin=0.)
+        if max_img is not None:
+            ax.set_xlim(xmax=max_img)
         return ax
 
     
