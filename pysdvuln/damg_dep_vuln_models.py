@@ -21,7 +21,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from scipy import interpolate
 
 
 class DamgDepVulnModels():
@@ -42,7 +42,7 @@ class DamgDepVulnModels():
         vulns = dict()
         for ds1 in range(0,4):
             frags = list()
-            for ds2 in range(ds1+1, 5):
+            for ds2 in range(ds1+1, d2l.get_num_ds()+1): #TODO hardcoded 4 DSs
                 frags.append( ddfc.get_fragility(ddfc.x_ims_g*9.81, ds2, ds1) )
             vulns[ds1] = cls.get_mlr(frags, d2l, ds1)
             # frags = np.array(frags).T
@@ -81,6 +81,24 @@ class DamgDepVulnModels():
     def get_vuln_curves(self):
         return self.vulns
      
+
+    def interpolate(self, iml, ds1=0):
+        """
+        interpolated mean loss ratios and covs
+        """
+        # gmvs are clipped to max(iml)
+        gmvs_curve = np.piecewise(
+                     iml, [iml > self.ims[-1]], [self.ims[-1], lambda x: x])
+        ok = gmvs_curve >= self.ims[0]  # indices over the minimum #TODO
+        curve_ok = gmvs_curve[ok]
+        _means = np.zeros(gmvs_curve.shape[0])
+        if "_mlr_i1d" not in self.__dict__.keys():
+            self._mlr_i1d = dict()
+        if ds1 not in self._mlr_i1d.keys():
+            self._mlr_i1d[ds1] = interpolate.interp1d(self.ims, self.vulns[ds1])
+        _means[ok] = self._mlr_i1d[ds1](curve_ok)
+        return _means
+
      
     def get_vuln_curves_df(self, unit="g"):
          ims = self.get_ims(unit)
