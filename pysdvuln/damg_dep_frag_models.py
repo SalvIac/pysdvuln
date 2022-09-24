@@ -196,7 +196,7 @@ class ComputedDamgDepFragModels(DamgDepFragModelsNoC):
         ims = self.get_ims(ims, unit)
         P_ds = dict()
         for ds1 in range(4):
-            for ds2 in range(ds1+1,5):
+            for ds2 in range(ds1+1, self.dsc.get_num_ds()+1):
                 P_ds[(ds1, ds2)] = self.get_fragility(ims, ds2, ds1, unit)
         return P_ds
 
