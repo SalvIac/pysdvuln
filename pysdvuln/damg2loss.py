@@ -17,6 +17,7 @@
 """
 """
 
+import warnings
 import numpy as np
 from scipy.stats import beta
 import matplotlib.pyplot as plt
@@ -31,6 +32,10 @@ class Damg2Loss():
         if cov_loss is None:
             cov_loss = [None]*len(mean_loss)
         self.cov_loss = cov_loss
+        if self.mean_loss[0] != 0.:
+            warnings.warn("Adding 0 mean loss to represent DS0")
+            self.mean_loss.insert(0, 0.)
+            self.cov_loss.insert(0, None)
         
         
     @classmethod
@@ -80,6 +85,10 @@ class Damg2Loss():
         ax.set_ylabel("Frequency")
         ax.legend()
         plt.show()
+        
+        
+    def get_num_ds(self):
+        return len(self.mean_loss)-1 # first is DS0 (we don't count it)
         
         
     def __repr__(self):
