@@ -86,7 +86,6 @@ if __name__ == "__main__":
         
         # fragility include collapses
         ddfc = DamgDepFragModels(psdm, dsc, sigmab2b=0.3, imt="IM")
-
         
         
     #%% get fragility models and plot
