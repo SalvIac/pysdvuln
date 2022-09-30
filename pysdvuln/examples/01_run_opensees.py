@@ -34,7 +34,7 @@ look for #TODO to customize
 
 if __name__ == "__main__":
     
-    #TODO upload database file (change name accordingly)
+    #TODO upload database file (change filename accordingly)
     rc = load_pickle("database_gms")
     
     #TODO define capacity curve (Sd-Sa)
@@ -44,9 +44,9 @@ if __name__ == "__main__":
                                    [0.058    , 0.292    ],
                                    [0.153    , 0.295    ]]))
     
-    #TODO upload selection file (change name accordingly)
+    #TODO upload selection file (change filename accordingly)
     (inds1, inds2, sf1, sf2, sample2d) = load_pickle("gms_selection")
-
+    
     
     #%% run all selected ground motions with opensees
 
