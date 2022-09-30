@@ -19,6 +19,7 @@
 
 import numpy as np
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 from pysdvuln.utils_pickle import save_pickle, load_pickle
 from pysdvuln.records_container import RecordsContainer
 from pysdvuln.selector import Selector
@@ -34,8 +35,8 @@ if __name__ == "__main__":
     #TODO define inputs
     n = 1200
     max_im = 3. # in g
-    imt = "SA" # can be PGA, SA or AvgSa
-    period = 0.2 # in s (relevant if imt is SA or AvgSa)
+    imt = "AvgSa" # can be PGA, SA or AvgSa
+    period = 0.4 # in s (relevant if imt is SA or AvgSa)
     
     
     #%% create database
@@ -52,33 +53,59 @@ if __name__ == "__main__":
     
     # save database for later
     save_pickle(rc, "database_gms")
-    # rc = load_pickle("database_gms")
+    # rc = load_pickle("database_gms") # in case you already run the above
     
     
     #%% define selector
     
     if imt == "PGA":
-        imt = imt
+        imt2 = imt
         ims = rc.get_pgas()
     elif imt == "SA":
-        imt = "SA({:.2f}s)".format(period)
+        imt2 = "SA({:.2f}s)".format(period)
         ims = rc.get_sas(period)
     elif imt == "AvgSa":
-        imt = "AvgSa({:.2f}s)".format(period)
+        imt2 = "AvgSa({:.2f}s)".format(period)
         ims = rc.get_avgsas_T(period)
     else:
         raise Exception("check imt")
-        
     print("maximum IM in catalog", np.max(ims)/9.81, "g")
     rsns = rc.get_array("rsn")
-    del rc # to save RAM
 
-    sel = Selector(ims, rsns, min_im=0., max_im=max_im*9.81, bins=20, imt=imt)
+    sel = Selector(ims, rsns, min_im=0., max_im=max_im*9.81, bins=20, imt=imt2)
     
     
     #%% simulating annealing selection
     
     inds1, inds2, sf1, sf2, sample2d = sel.simul_ann(n, minscale=0.5, maxscale=2.,
-                                                     maxfun=1e7, maxiter=1000)
+                                                      maxfun=1e7, maxiter=1000)
     save_pickle((inds1, inds2, sf1, sf2, sample2d), "gms_selection")
+
+
+    #%% some plots
+    
+    # scatter plot scaled ims (in m/s2) from selected ground motions
+    ims1 = list()
+    ims2 = list()
+    for i, (ind1, ind2, s1, s2) in enumerate(tqdm(zip(inds1, inds2, sf1, sf2))):
+        rec1 = rc.records[ind1].scale(s1)
+        rec2 = rc.records[ind2].scale(s2)
+        if imt == "PGA":
+            ims = rc.get_pgas()
+            ims1.append( rec1.get_sa(0.) )
+            ims2.append( rec2.get_sa(0.) )
+        elif imt == "SA":
+            ims1.append( rec1.get_sa_T(period) )
+            ims2.append( rec2.get_sa_T(period) )
+        elif imt == "AvgSa":
+            ims1.append( rec1.get_avgsa_T(period) )
+            ims2.append( rec2.get_avgsa_T(period) )
+        else:
+            raise Exception("check imt")
+    plt.figure()
+    plt.scatter(ims1, ims2)
+    plt.show()
+    
+    # or simply
+    sel.scatter(sample2d[:,0], sample2d[:,1])
     
