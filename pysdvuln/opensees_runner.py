@@ -132,13 +132,22 @@ class OpenseesRunner():
         return self.get_value("disp", time)
 
 
-    def get_fund_period(self):
+    def get_yield_period(self):
         '''
         mass [kg]
         capacity curve [g]
         displacement [m]
         '''
-        return bsd.get_fund_period(self.capacity_curve)
+        return bsd.get_yield_period(self.capacity_curve)
+
+
+    def get_secant_period(self):
+        '''
+        mass [kg]
+        capacity curve [g]
+        displacement [m]
+        '''
+        return bsd.get_secant_period(self.capacity_curve)
 
 
     def __repr__(self):
