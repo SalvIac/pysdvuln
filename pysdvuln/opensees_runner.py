@@ -49,7 +49,7 @@ class OpenseesRunner():
     
 
     @classmethod
-    def from_oq(cls, path, class_name):
+    def from_gem(cls, path, class_name):
         '''
         class_name: string
         '''
