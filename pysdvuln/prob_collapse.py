@@ -238,6 +238,28 @@ class ProbCollapse():
             fig.savefig(os.path.join(path, "pcoll_04.png"),
                         bbox_inches='tight', dpi=600, format="png")
 
+
+        # 2d im_g2-collapse
+        fig, ax = plt.subplots()
+        for ds, col in zip(ds_states[1:], ds_colors[1:]):
+            ys = self.psdm.dam_state_cl.get_ds_thresh(ds)*np.ones_like(X)
+            z = self(ys, X)
+            ax.plot(X*9.81*scale, z, label="DS"+str(ds))
+        ax.legend(framealpha=0.5)
+        ax.set_xlabel('{} G2 ({})'.format(imt, unit))
+        ax.set_ylabel('Probabilty of collapse')
+        if save:
+            fig.savefig(os.path.join(path, "pcoll_05.png"),
+                        bbox_inches='tight', dpi=600, format="png")
+        else:
+            plt.show()
+        
+        
+    def plot(self, unit="g", imt="IM", save=False, path=""):
+        if unit == "g":
+            scale = 1/9.81
+        else:
+            scale = 1.
         # 3d maxds-im-collapse
         ds_states, ds_colors = self.psdm.get_ds_colors()
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
@@ -247,6 +269,8 @@ class ProbCollapse():
         ax.scatter(self.psdm.ims_g2[self.psdm.nocoll]*scale,
                    self.psdm.maxds_g1[self.psdm.nocoll], 0.,
                    s=20, lw=0.5, color="b", label="Not collapsed")
+        Y = np.linspace(1e-3, np.max(self.psdm.maxds_g1), 500)
+        X = np.linspace(1e-3, np.max(self.psdm.ims_g2), 100)/9.81
         ax.plot(np.zeros_like(Y), Y, self.eval_expit(Y.flatten(), self.a, self.b),
                 color="k")
         ax.plot(X*9.81*scale, np.zeros_like(X), self.eval_expit(X.flatten(), self.c0, self.d),
@@ -264,24 +288,9 @@ class ProbCollapse():
         ax.set_zlim(0., 1.)
         ax.view_init(elev=25, azim=-140)
         if save:
-            fig.savefig(os.path.join(path, "pcoll_05.png"),
-                        bbox_inches='tight', dpi=600, format="png")
-
-        # 2d im_g2-collapse
-        fig, ax = plt.subplots()
-        for ds, col in zip(ds_states[1:], ds_colors[1:]):
-            ys = self.psdm.dam_state_cl.get_ds_thresh(ds)*np.ones_like(X)
-            z = self(ys, X)
-            ax.plot(X*9.81*scale, z, label="DS"+str(ds))
-        ax.legend(framealpha=0.5)
-        ax.set_xlabel('{} G2 ({})'.format(imt, unit))
-        ax.set_ylabel('Probabilty of collapse')
-        if save:
-            fig.savefig(os.path.join(path, "pcoll_06.png"),
-                        bbox_inches='tight', dpi=600, format="png")
-        else:
-            plt.show()
-        
+            fig.savefig(os.path.join(path, "pcoll.png"),
+                        bbox_inches='tight', dpi=600, format="png") 
+    
     
     def __repr__(self):
         return self.__str__()

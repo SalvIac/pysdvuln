@@ -177,29 +177,12 @@ class DamgStateClassifier():
     
     
     def check_plots(self):
+        self.plot()
+
         if not self.randomize:
             return
-        
         thresholds = self.get_thresholds(100000, save=False)
         ds_states, ds_colors = self.get_ds_colors()
-        
-        # 3d plot of all distributions
-        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-        for i in range(len(self.mean_thresholds)):
-            hist, bins = np.histogram(thresholds[:,i], bins=20)
-            xs = (bins[:-1] + bins[1:])/2
-            ax.bar(xs, hist/100000, zs=i, zdir='y', alpha=0.8,
-                   width=0.9*np.min(np.diff(bins)), color=ds_colors[i+1])
-            ax.plot([self.mean_thresholds[i]]*2, [-0.1, i], [0.]*2, 
-                    color=ds_colors[i+1])
-        ax.set_yticks(range(len(self.mean_thresholds)))
-        ax.set_yticklabels(self.get_damage_states_str()[1:])
-        ax.set_xlabel("Threshold")
-        ax.set_ylabel("Damage State")
-        ax.set_zlabel("Frequency")
-        ax.set_ylim(-0.1, len(self.mean_thresholds)-1+0.1)
-        ax.set_zlim(bottom=0.)
-
         # single plots
         for i in range(len(self.mean_thresholds)):
             # linear
@@ -220,6 +203,29 @@ class DamgStateClassifier():
             ax.set_xlabel("log(Threshold DS{})".format(i+1))
             ax.set_ylabel("Frequency")
         plt.show()
+
+
+    def plot(self):
+        if not self.randomize:
+            return
+        thresholds = self.get_thresholds(100000, save=False)
+        ds_states, ds_colors = self.get_ds_colors()
+        # 3d plot of all distributions
+        fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+        for i in range(len(self.mean_thresholds)):
+            hist, bins = np.histogram(thresholds[:,i], bins=20)
+            xs = (bins[:-1] + bins[1:])/2
+            ax.bar(xs, hist/100000, zs=i, zdir='y', alpha=0.8,
+                   width=0.9*np.min(np.diff(bins)), color=ds_colors[i+1])
+            ax.plot([self.mean_thresholds[i]]*2, [-0.1, i], [0.]*2, 
+                    color=ds_colors[i+1])
+        ax.set_yticks(range(len(self.mean_thresholds)))
+        ax.set_yticklabels(self.get_damage_states_str()[1:])
+        ax.set_xlabel("Threshold")
+        ax.set_ylabel("Damage State")
+        ax.set_zlabel("Frequency")
+        ax.set_ylim(-0.1, len(self.mean_thresholds)-1+0.1)
+        ax.set_zlim(bottom=0.)
 
 
     def __repr__(self):

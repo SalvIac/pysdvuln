@@ -388,6 +388,18 @@ class PSDM_gg21():
             fig.savefig(os.path.join(path, "psdm_06.png"),
                         bbox_inches='tight', dpi=600, format="png")
 
+        self.plot(unit, imt, save, path)
+        
+  
+    
+    def plot(self, unit="g", imt="IM", save=False, path=""):
+        if unit == "g":
+            scale = 1/9.81
+        else:
+            scale = 1.
+        filt_g1 = np.logical_and(self.nocoll, self.nonz_en_g1)
+        filt_g2 = np.logical_and(self.nocoll, self.nonz_en_g2)
+        ds_states, ds_colors = self.get_ds_colors()
 
         # 3d hysteretic energy GM1+GM2 vs max drift GM1 vs IMs GM2
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
@@ -412,12 +424,11 @@ class PSDM_gg21():
         ax.set_zlabel('Total Hysteretic Energy')
         ax.view_init(elev=25, azim=-140)
         if save:
-            fig.savefig(os.path.join(path, "psdm_07.png"),
+            fig.savefig(os.path.join(path, "psdm.png"),
                         bbox_inches='tight', dpi=600, format="png")
         else:
             plt.show()
-        
-  
+    
 
     def __call__(self, gm1_max_drift, gm2_ims):
         return self.power_law_2d(np.vstack([gm1_max_drift, gm2_ims]).T,
