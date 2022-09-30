@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # rec2.plot_acc_vel_disp(unit="g")
 
     path = r"sample_capacity_curves"
-    opr = OpenseesRunner.from_oq(path, "CR_LFINF-DUL_H2")
+    opr = OpenseesRunner.from_gem(path, "CR_LFINF-DUL_H2")
     opr.DEGRADATION = False
     t = time.time()
     res = opr.run(rec2.get_time_gmr(unit="m/s2", resting_time=0))

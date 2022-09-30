@@ -3,7 +3,6 @@
 @author: Salvatore Iacoletti
 """
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import openseespy.opensees as ops
@@ -13,10 +12,8 @@ bsd = BaseSDOF()
 
 if __name__ == '__main__':
 
-    filepath = "sample_capacity_curves/CR_LFINF-DUL_H2.csv" 
-    capacity_curve = pd.read_csv(filepath).to_numpy()
-
     ops.wipe()
+    filepath = "sample_capacity_curves/CR_LFINF-DUL_H2.csv" 
     capacity_curve = pd.read_csv(filepath).to_numpy()
     bsd.material_martins_silva(capacity_curve)
     bsd.geometry()

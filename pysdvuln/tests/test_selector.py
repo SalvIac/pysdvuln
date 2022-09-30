@@ -31,7 +31,7 @@ if __name__ == "__main__":
     
     sample2d = sel.get_sample2d_inds(inds1, inds2)
     sel.scatter(sample2d[:,0], sample2d[:,1], s=10, lw=0.5, edgecolor="k")
-    sel.hist2d(sample2d, bar_width=0.5)
+    sel.hist2d(sample2d)
 
     
     #%% various kind of sampling 1d and 2d

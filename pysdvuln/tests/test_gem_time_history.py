@@ -45,7 +45,7 @@ if __name__ == '__main__':
 
     #%% my functions
     
-    period = bsd.get_fund_period(capacity_curve)
+    period = bsd.get_secant_period(capacity_curve)
     
     ops.wipe()
     bsd.material_martins_silva(capacity_curve, degradation=degradation)

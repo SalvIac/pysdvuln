@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from pysdvuln.damg_state_classifier import DamgStateClassifier
 from pysdvuln.psdm_gg21 import PSDM_gg21
-from pysdvuln.damg_dep_frag_curves_noc import DamgDepFragCurvesNoC
+from pysdvuln.damg_dep_frag_models_noc import DamgDepFragModelsNoC
 from scipy.io import loadmat
 
 
@@ -84,7 +84,7 @@ if __name__ == "__main__":
                      dsc, collapses=collapses, zero_tol=1e-6)
     
     # no collapses
-    ddfc = DamgDepFragCurvesNoC(psdm, dsc)
+    ddfc = DamgDepFragModelsNoC(psdm, dsc)
     ddfc.check_plots(unit="g")
     df_frag = ddfc.get_frags_params_df(unit="g")
     

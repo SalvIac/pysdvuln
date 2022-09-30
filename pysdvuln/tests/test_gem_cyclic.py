@@ -102,8 +102,5 @@ if __name__ == '__main__':
                          interval=outputs["disp"].shape[0]/10)
     plt.show()
     
-    ss
-    anim.save('cyclic2.gif', writer='imagemagick')
+    # anim.save('cyclic2.gif', writer='imagemagick')
         
-        
-    
