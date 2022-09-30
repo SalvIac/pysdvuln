@@ -100,6 +100,7 @@ if __name__ == "__main__":
     
     #TODO damage-to-loss models can be defined also with mean_loss, cov_loss
     d2l = Damg2Loss.default()
+    d2l.plot()
 
     
     #%% Vulnerability models and surface
