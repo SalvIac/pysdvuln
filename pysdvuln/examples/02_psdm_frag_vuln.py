@@ -21,10 +21,10 @@ import numpy as np
 from pysdvuln.opensees_runner import OpenseesRunner
 from pysdvuln.psdm_gg21 import PSDM_gg21
 from pysdvuln.damg_state_classifier import DamgStateClassifier
-from pysdvuln.damg_dep_frag_curves_noc import DamgDepFragCurvesNoC
-from pysdvuln.damg_dep_frag_curves import DamgDepFragCurves
+from pysdvuln.damg_dep_frag_models_noc import DamgDepFragModelsNoC
+from pysdvuln.damg_dep_frag_models import DamgDepFragModels
 from pysdvuln.prob_collapse import ProbCollapse
-from pysdvuln.damg_dep_vuln_curves import DamgDepVulnCurves
+from pysdvuln.damg_dep_vuln_models import DamgDepVulnModels
 from pysdvuln.damg2loss import Damg2Loss
 from pysdvuln.vuln_3d import Vuln3d
 from pysdvuln.utils_pickle import load_pickle
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     
     if consider_collapse_model:
         # fragility no collapses from Gentile and Galasso (2021)
-        ddfc = DamgDepFragCurvesNoC(psdm, dsc, sigmab2b=0.3, imt="IM")
+        ddfc = DamgDepFragModelsNoC(psdm, dsc, sigmab2b=0.3, imt="IM")
         ddfc.check_plots(unit="g")
     else:
         # probability of collpse
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         pc.check_plots(unit="g", imt="IM")
     
         # fragility include collapses
-        ddfc = DamgDepFragCurves(psdm, dsc, sigmab2b=0.3, imt="IM")
+        ddfc = DamgDepFragModels(psdm, dsc, sigmab2b=0.3, imt="IM")
         ddfc.check_plots(unit="g")
     
         
@@ -104,14 +104,14 @@ if __name__ == "__main__":
     
     #%% Vulnerability models and surface
     
-    ddvc = DamgDepVulnCurves(ddfc, d2l)
+    ddvc = DamgDepVulnModels.from_ddfc_d2l(ddfc, d2l)
     ddvc.check_plots(unit="g", max_img=3.)
     df = ddvc.get_vuln_curves_df()
     
 
     #%% Vulnerability surface
     
-    v3d = Vuln3d(ddvc)
+    v3d = Vuln3d.from_ddvc(ddvc)
     v3d.plot_vuln_surf(unit="g", max_img=3.)
     df_3d = v3d.get_vuln_3d_df()
         
