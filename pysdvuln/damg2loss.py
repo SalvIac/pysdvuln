@@ -41,7 +41,7 @@ class Damg2Loss():
     @classmethod
     def default(cls):
         '''
-        from Martins and Silva (2020)
+        from Martins and Silva (2020): DS0, DS1, DS2, DS3, DS4
         '''
         return cls([0., 0.05, 0.2, 0.6, 1.], [None, 0.3, 0.2, 0.1, 0.])
 
@@ -56,10 +56,19 @@ class Damg2Loss():
 
 
     def get_mean_loss(self):
-        mean_loss = list()
-        for mu, cov in zip(self.mean_loss, self.cov_loss):
-            lr, pr_lr = self.get_pmf(self.damg, mu, cov)
-            mean_loss.append( np.sum(lr * pr_lr) )
+        mean_loss = self.mean_loss
+        # check with integrals
+        # mean_loss = list()
+        # for mu, cov in zip(self.mean_loss, self.cov_loss):
+        #     lr, pr_lr = self.get_pmf(self.damg, mu, cov)
+        #     mean_loss.append( np.sum(lr * pr_lr) )
+        # using scipy.integrate
+        # for mu, cov in zip(self.mean_loss, self.cov_loss):
+        #     if mu == 0. or mu == 1. or cov == 0. or cov is None:
+        #         mean_loss.append( mu )
+        #     else:
+        #         distr = self.get_distr(mu, cov)
+        #         mean_loss.append( integrate.quad(lambda x: x*distr.pdf(x), 0, 1.)[0] )
         return mean_loss
 
 
@@ -71,7 +80,7 @@ class Damg2Loss():
         return damg[:-1]+np.diff(damg)/2, np.diff(distr.cdf(damg))
         
 
-    def check(self):
+    def plot(self):
         fig, ax = plt.subplots()
         for ds, (mu, cov) in enumerate(zip(self.mean_loss, self.cov_loss)):
             if mu != 0. and mu != 1.:
