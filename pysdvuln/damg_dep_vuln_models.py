@@ -26,7 +26,7 @@ from scipy import interpolate
 
 class DamgDepVulnModels():
 
-    def __init__(self, imt, ims, vulns, unit="g"):
+    def __init__(self, imt, ims, vulns, covs=None, unit="g"):
         self.imt = imt 
         if unit == "g": # in g by default
             self.ims = ims
@@ -35,23 +35,21 @@ class DamgDepVulnModels():
         else:
             raise Exception("check units")
         self.vulns = vulns
+        self.covs = covs
         
         
     @classmethod
     def from_ddfc_d2l(cls, ddfc, d2l):
         vulns = dict()
+        covs = dict()
         for ds1 in range(0,4):
             frags = list()
             for ds2 in range(ds1+1, d2l.get_num_ds()+1): #TODO hardcoded 4 DSs
                 frags.append( ddfc.get_fragility(ddfc.x_ims_g*9.81, ds2, ds1) )
             vulns[ds1] = cls.get_mlr(frags, d2l, ds1)
-            # frags = np.array(frags).T
-            # temp1 = np.insert(frags, 0, np.ones_like(frags[:,0]), axis=1)
-            # temp2 = np.insert(frags, frags.shape[1], np.zeros_like(frags[:,0]), axis=1)
-            # prob_ds = temp1 - temp2
-            # dmg2loss_mesh = np.meshgrid(d2l.get_mean_loss()[ds1:], np.ones_like(frags[:,0]))[0]
-            # self.vulns[ds1] = np.sum( prob_ds * dmg2loss_mesh, axis=1 )
-        return cls(ddfc.imt, ddfc.x_ims_g, vulns)
+            var = cls.get_cov(frags, d2l, ds1)
+            covs[ds1] = np.sqrt(var)/vulns[ds1]
+        return cls(ddfc.imt, ddfc.x_ims_g, vulns, covs)
 
 
     @staticmethod
@@ -61,9 +59,32 @@ class DamgDepVulnModels():
         temp1 = np.insert(frags, 0, np.ones_like(frags[:,0]), axis=1)
         temp2 = np.insert(frags, frags.shape[1], np.zeros_like(frags[:,0]), axis=1)
         prob_ds = temp1 - temp2
-        dmg2loss_mesh = np.meshgrid(d2l.get_mean_loss()[ds1:], np.ones_like(frags[:,0]))[0]
-        mlr = np.sum( prob_ds * dmg2loss_mesh, axis=1 )
+        mlr_mesh = np.meshgrid(d2l.get_mean_lr()[ds1:], np.ones_like(frags[:,0]))[0]
+        mlr = np.sum( mlr_mesh * prob_ds, axis=1 )
         return mlr
+    
+    
+    @staticmethod
+    def get_cov(frags, d2l, ds1=0):
+        # https://en.wikipedia.org/wiki/Law_of_total_variance
+        if isinstance(frags, list):
+            frags = np.array(frags).T
+        temp1 = np.insert(frags, 0, np.ones_like(frags[:,0]), axis=1)
+        temp2 = np.insert(frags, frags.shape[1], np.zeros_like(frags[:,0]), axis=1)
+        prob_ds = temp1 - temp2
+        mlr_mesh = np.meshgrid(d2l.get_mean_lr()[ds1:], np.ones_like(frags[:,0]))[0]
+        vlr_mesh = np.meshgrid(d2l.get_var_lr()[ds1:], np.ones_like(frags[:,0]))[0]
+        last = list()
+        for k in range(mlr_mesh.shape[0]):
+            vals = list()
+            for i in range(1, mlr_mesh.shape[1]):
+                for j in range(0, i):
+                    vals.append( mlr_mesh[k,i] * prob_ds[k,i] * mlr_mesh[k,j] * prob_ds[k,j] )
+            last.append( sum(vals) )
+        var = np.sum( vlr_mesh * prob_ds, axis=1 ) + \
+              np.sum( mlr_mesh**2 * (1-prob_ds) * prob_ds, axis=1 ) - \
+              2*np.array(last)
+        return var
     
 
     def get_ims(self, unit="g"):
@@ -112,8 +133,54 @@ class DamgDepVulnModels():
          return pd.DataFrame(data)
         
     
-    def check_plots(self, unit="g", imt=None, save=False, path=None,
-                    max_img=None):
+    def plot(self, unit="g", imt=None, max_img=None, uncertainty=False,
+             save=False, path=None):
+        if max_img is None:
+            inds = np.ones_like(self.ims, dtype=bool)
+        else:
+            inds = self.ims <= max_img
+        fig = plt.figure()
+        for ds1 in range(0,4):
+            if ds1 == 0:
+                label = "Undamaged state"
+            elif ds1 == 1:
+                label = "Initial slight damage state"
+            elif ds1 == 2:
+                label = "Initial moderate damage state"
+            elif ds1 == 3:
+                label = "Initial extensive damage state" # "ds"+str(ds1)
+
+            color = ["g", "y", [1.,0.6,0.], "r"][ds1]
+            if unit == "g":
+                ims = self.ims
+            else:
+                ims = self.ims*9.81
+            if uncertainty and self.covs is not None:
+                from scipy.stats import beta
+                mu = self.vulns[ds1]
+                cov = self.covs[ds1]
+                sigma = cov*mu
+                a = ((1-mu)/sigma**2-1/mu) * mu**2
+                b = a * (1/mu-1)
+                dist = beta(a, b)
+                plt.fill_between(ims[inds], dist.ppf(0.16)[inds], dist.ppf(0.84)[inds],
+                                color=color, alpha=.2) # , label='16-84% confidence interval'
+            plt.plot(ims[inds], self.vulns[ds1][inds], color=color, label=label)
+
+
+        plt.legend(framealpha=0.5)
+        if imt is None:
+            imt = self.imt
+        plt.xlabel('{} ({})'.format(imt, unit))
+        plt.ylabel('Mean Loss Ratio')
+        if save:
+            fig.savefig(os.path.join(path, "vuln.png"),
+                        bbox_inches='tight', dpi=600, format="png")
+        else:
+            plt.show()
+
+
+    def plot_covs(self, unit="g", imt=None, show=True, max_img=None):
         if max_img is None:
             inds = np.ones_like(self.ims, dtype=bool)
         else:
@@ -130,18 +197,15 @@ class DamgDepVulnModels():
                 label = "Initial extensive damage state" # "ds"+str(ds1)
 
             if unit == "g":
-                plt.plot(self.ims[inds], self.vulns[ds1][inds], label=label)
+                plt.plot(self.ims[inds], self.covs[ds1][inds], label=label)
             else:
-                plt.plot(self.ims[inds]*9.81, self.vulns[ds1][inds], label=label)
+                plt.plot(self.ims[inds]*9.81, self.covs[ds1][inds], label=label)
         plt.legend(framealpha=0.5)
         if imt is None:
             imt = self.imt
         plt.xlabel('{} ({})'.format(imt, unit))
-        plt.ylabel('Mean Loss Ratio')
-        if save:
-            fig.savefig(os.path.join(path, "vuln.png"),
-                        bbox_inches='tight', dpi=600, format="png")
-        else:
+        plt.ylabel('CoV Loss Ratio')
+        if show:
             plt.show()
 
     
