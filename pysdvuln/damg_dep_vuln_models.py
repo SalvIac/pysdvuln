@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from scipy import interpolate
+from scipy.stats import beta
 
 
 class DamgDepVulnModels():
@@ -121,16 +122,18 @@ class DamgDepVulnModels():
         return _means
 
      
-    def get_vuln_curves_df(self, unit="g"):
-         ims = self.get_ims(unit)
-         data = {self.imt: ims}
-         for ds1 in self.vulns.keys():
-             if ds1 == 0:
-                 label = "Mainshock"
-             else:
-                 label = "Initial DS"+str(ds1)
-             data[label] = self.vulns[ds1]
-         return pd.DataFrame(data)
+    def get_vuln_curves_df(self, unit="g", uncertainty=False):
+        ims = self.get_ims(unit)
+        data = {self.imt: ims}
+        for ds1 in self.vulns.keys():
+            if ds1 == 0:
+                label = "Und"
+            else:
+                label = "DS"+str(ds1)
+            data["Mean|"+label] = self.vulns[ds1]
+            if uncertainty and self.covs is not None:
+                data["CoV|" +label] = self.covs[ds1]
+        return pd.DataFrame(data)
         
     
     def plot(self, unit="g", imt=None, max_img=None, uncertainty=False,
@@ -156,15 +159,11 @@ class DamgDepVulnModels():
             else:
                 ims = self.ims*9.81
             if uncertainty and self.covs is not None:
-                from scipy.stats import beta
                 mu = self.vulns[ds1]
                 cov = self.covs[ds1]
-                sigma = cov*mu
-                a = ((1-mu)/sigma**2-1/mu) * mu**2
-                b = a * (1/mu-1)
-                dist = beta(a, b)
+                dist = BetaDistribution.get_distr(mu, cov*mu)
                 plt.fill_between(ims[inds], dist.ppf(0.16)[inds], dist.ppf(0.84)[inds],
-                                color=color, alpha=.2) # , label='16-84% confidence interval'
+                                color=color, alpha=.1) # , label='16-84% confidence interval'
             plt.plot(ims[inds], self.vulns[ds1][inds], color=color, label=label)
 
 
@@ -214,4 +213,27 @@ class DamgDepVulnModels():
         
     def __str__(self):
         return "<{}>".format(self.__class__.__name__)
+
+
+
+
+
+class BetaDistribution():
+
+    @classmethod
+    def get_distr(cls, means, stddevs):
+        a = cls._alpha(means, stddevs)
+        b = cls._beta(means, stddevs)
+        return beta(a, b)
+
+    @staticmethod
+    def _alpha(mean, stddev):
+        return ((1 - mean) / stddev ** 2 - 1 / mean) * mean ** 2
+
+    @staticmethod
+    def _beta(mean, stddev):
+        return ((1 - mean) / stddev ** 2 - 1 / mean) * (mean - mean ** 2)
+
+
+
 
