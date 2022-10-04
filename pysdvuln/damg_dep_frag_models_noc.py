@@ -129,7 +129,7 @@ class DamgDepFragModelsNoC():
         data = {"{} ({})".format(self.imt, unit): ims}
         for (ds1, ds2) in P_ds.keys():
             if ds1 == 0:
-                label = "DS"+str(ds2)
+                label = "DS"+str(ds2)+"|Und"
             else:
                 label = "DS"+str(ds2)+"|DS"+str(ds1)
             data[label] = P_ds[(ds1, ds2)]
