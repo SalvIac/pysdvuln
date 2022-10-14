@@ -42,6 +42,8 @@ class OpenseesRunner():
 
 
     def __init__(self, capacity_curve, mass=1., **kwargs):
+        if not np.all(capacity_curve[0,:] == 0.):
+            capacity_curve = np.vstack([np.array([0.,0.]), capacity_curve])
         self.capacity_curve = capacity_curve
         self.__dict__.update(kwargs)
         self.mass = mass
