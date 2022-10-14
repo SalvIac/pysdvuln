@@ -136,23 +136,26 @@ class DamgDepVulnModels():
         return pd.DataFrame(data)
         
     
-    def plot(self, unit="g", imt=None, max_img=None, uncertainty=False,
-             save=False, path=None):
+    def plot(self, ax=None, unit="g", imt=None, max_img=None, dss=range(0,4),
+             uncertainty=False, save=False, path=None, **kwargs):
         if max_img is None:
             inds = np.ones_like(self.ims, dtype=bool)
         else:
             inds = self.ims <= max_img
-        fig = plt.figure()
-        for ds1 in range(0,4):
-            if ds1 == 0:
-                label = "Undamaged state"
-            elif ds1 == 1:
-                label = "Initial slight damage state"
-            elif ds1 == 2:
-                label = "Initial moderate damage state"
-            elif ds1 == 3:
-                label = "Initial extensive damage state" # "ds"+str(ds1)
-
+        if ax is None:
+            fig, ax = plt.subplots(figsize=(6,6))
+        else:
+            save = False
+        for ds1 in dss:
+            # if ds1 == 0:
+            #     label = "Undamaged state"
+            # elif ds1 == 1:
+            #     label = "Initial slight damage state"
+            # elif ds1 == 2:
+            #     label = "Initial moderate damage state"
+            # elif ds1 == 3:
+            #     label = "Initial extensive damage state" # "ds"+str(ds1)
+            label = "DS"+str(ds1)
             color = ["g", "y", [1.,0.6,0.], "r"][ds1]
             if unit == "g":
                 ims = self.ims
@@ -162,16 +165,15 @@ class DamgDepVulnModels():
                 mu = self.vulns[ds1]
                 cov = self.covs[ds1]
                 dist = BetaDistribution.get_distr(mu, cov*mu)
-                plt.fill_between(ims[inds], dist.ppf(0.16)[inds], dist.ppf(0.84)[inds],
+                ax.fill_between(ims[inds], dist.ppf(0.16)[inds], dist.ppf(0.84)[inds],
                                 color=color, alpha=.1) # , label='16-84% confidence interval'
-            plt.plot(ims[inds], self.vulns[ds1][inds], color=color, label=label)
-
-
-        plt.legend(framealpha=0.5)
+            ax.plot(ims[inds], self.vulns[ds1][inds], color=color, label=label,
+                    **kwargs)
+        ax.legend(framealpha=0.5)
         if imt is None:
             imt = self.imt
-        plt.xlabel('{} ({})'.format(imt, unit))
-        plt.ylabel('Mean Loss Ratio')
+        ax.set_xlabel('{} ({})'.format(imt, unit))
+        ax.set_ylabel('Mean Loss Ratio')
         if save:
             fig.savefig(os.path.join(path, "vuln.png"),
                         bbox_inches='tight', dpi=600, format="png")
