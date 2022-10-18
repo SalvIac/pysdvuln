@@ -43,13 +43,17 @@ class DamgDepVulnModels():
     def from_ddfc_d2l(cls, ddfc, d2l):
         vulns = dict()
         covs = dict()
-        for ds1 in range(0,4):
+        for ds1 in range(0,4): #TODO hardcoded 4 DSs
             frags = list()
-            for ds2 in range(ds1+1, d2l.get_num_ds()+1): #TODO hardcoded 4 DSs
+            for ds2 in range(ds1+1, d2l.get_num_ds()+1):
                 frags.append( ddfc.get_fragility(ddfc.x_ims_g*9.81, ds2, ds1) )
-            vulns[ds1] = cls.get_mlr(frags, d2l, ds1)
-            var = cls.get_cov(frags, d2l, ds1)
-            covs[ds1] = np.sqrt(var)/vulns[ds1]
+            mlr = cls.get_mlr(frags, d2l, ds1)
+            var = cls.get_var(frags, d2l, ds1)
+            cov = np.sqrt(var)/mlr
+            inds = np.sqrt(var) > np.sqrt(mlr*(1-mlr))
+            cov[inds] = np.sqrt(mlr[inds]*(1-mlr[inds]))
+            vulns[ds1] = mlr
+            covs[ds1] = cov
         return cls(ddfc.imt, ddfc.x_ims_g, vulns, covs)
 
 
@@ -66,7 +70,7 @@ class DamgDepVulnModels():
     
     
     @staticmethod
-    def get_cov(frags, d2l, ds1=0):
+    def get_var(frags, d2l, ds1=0):
         # https://en.wikipedia.org/wiki/Law_of_total_variance
         if isinstance(frags, list):
             frags = np.array(frags).T
