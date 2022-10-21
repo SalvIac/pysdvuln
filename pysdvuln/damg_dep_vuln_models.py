@@ -50,8 +50,8 @@ class DamgDepVulnModels():
             mlr = cls.get_mlr(frags, d2l, ds1)
             var = cls.get_var(frags, d2l, ds1)
             cov = np.sqrt(var)/mlr
-            inds = np.sqrt(var) > np.sqrt(mlr*(1-mlr))
-            cov[inds] = np.sqrt(mlr[inds]*(1-mlr[inds]))
+            inds = cov**2 > 1 / mlr - 1.
+            cov[inds] = np.sqrt(1. / mlr[inds] - 1.)*(1.-1e-9)
             vulns[ds1] = mlr
             covs[ds1] = cov
         return cls(ddfc.imt, ddfc.x_ims_g, vulns, covs)
