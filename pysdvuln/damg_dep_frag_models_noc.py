@@ -30,7 +30,7 @@ from scipy import interpolate
 class DamgDepFragModelsNoC():
 
     # default im arrays for plots and outputs
-    x_ims_g = np.logspace(np.log10(1e-3), np.log10(10), 200)
+    x_ims_g = np.logspace(np.log10(1e-2), np.log10(1e1), 200)
     x_ims_ms2 = x_ims_g*9.81
     
     def __init__(self, psdm, dsc, sigmab2b=0., imt="IM"):
