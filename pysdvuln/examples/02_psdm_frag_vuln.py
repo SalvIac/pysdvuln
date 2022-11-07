@@ -92,6 +92,7 @@ if __name__ == "__main__":
     
     ddfc.plot_frag_all(unit="g", max_img=3.)
     df = ddfc.get_fragilities_df()
+    df.to_csv("frags.csv", index=False)
     
     
     #%% define damage to loss model
@@ -106,7 +107,8 @@ if __name__ == "__main__":
     ddvc = DamgDepVulnModels.from_ddfc_d2l(ddfc, d2l)
     ddvc.plot(unit="g", max_img=3.)
     df = ddvc.get_vuln_curves_df()
-    
+    df.to_csv("vulns.csv", index=False)
+
 
     #%% Vulnerability surface
     
